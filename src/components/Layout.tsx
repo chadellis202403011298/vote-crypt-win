@@ -1,15 +1,43 @@
 import { ReactNode } from "react";
 import NewsTicker from "./NewsTicker";
 import { Link } from "react-router-dom";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 interface LayoutProps {
   children: ReactNode;
 }
 
-// Main layout wrapper with ticker and footer
+/**
+ * Main layout wrapper with header, ticker, and footer
+ * Includes RainbowKit wallet connection in the header
+ */
 const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Header with Wallet Connect */}
+      <header className="bg-background border-b border-border sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <Link to="/" className="text-2xl font-black text-primary hover:opacity-80 transition-opacity">
+            ElectionBet
+          </Link>
+          <nav className="hidden md:flex items-center gap-6">
+            <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
+              Home
+            </Link>
+            <Link to="/app" className="text-sm font-medium hover:text-primary transition-colors">
+              Predict
+            </Link>
+          </nav>
+          <div className="flex items-center gap-4">
+            <ConnectButton
+              accountStatus="address"
+              chainStatus="icon"
+              showBalance={false}
+            />
+          </div>
+        </div>
+      </header>
+
       {/* Ticker */}
       <NewsTicker />
 

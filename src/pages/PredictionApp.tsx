@@ -6,8 +6,21 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-// DApp page for placing encrypted predictions
+/**
+ * Prediction App Page - Main DApp interface for placing encrypted predictions
+ *
+ * Flow:
+ * 1. User connects wallet (MetaMask, WalletConnect, Safe)
+ * 2. User selects a candidate from the grid
+ * 3. User enters bet amount (minimum 0.01 ETH)
+ * 4. Data is encrypted using Zama FHE SDK in browser
+ * 5. Encrypted prediction is submitted to smart contract
+ *
+ * Privacy: All candidate choices and bet amounts are encrypted
+ * using Fully Homomorphic Encryption before submission to blockchain
+ */
 const PredictionApp = () => {
+  // Track selected candidate index (0 or 1 for binary election)
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null);
 
   return (

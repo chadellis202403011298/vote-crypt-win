@@ -1,73 +1,91 @@
-# Welcome to your Lovable project
+# ElectionBet - Encrypted Election Prediction Market
 
-## Project info
+A privacy-preserving election prediction market built with Fully Homomorphic Encryption (FHE) on Ethereum Sepolia testnet. Users can place encrypted bets on election outcomes where candidate choices and bet amounts remain completely private until results are officially declared.
 
-**URL**: https://lovable.dev/projects/8728b6f6-34a7-412d-856e-c2d0df90f7f9
+## 🎯 Features
 
-## How can I edit this code?
+- **Complete Privacy**: All predictions are encrypted using Zama FHE before submission to the blockchain
+- **Secure Betting**: Candidate selection and bet amounts are processed as ciphertext on-chain
+- **Fair Settlement**: Automated payout distribution based on encrypted vote tallies
+- **Modern UI**: Beautiful, responsive interface built with React + shadcn/ui
+- **Web3 Integration**: Seamless wallet connection with MetaMask, WalletConnect, and Safe
 
-There are several ways of editing your application.
+## 🏗️ Architecture
 
-**Use Lovable**
+### Smart Contract Layer
+- **ElectionBettingPool.sol**: Main contract managing encrypted predictions
+  - Uses `@fhevm/solidity` for FHE operations
+  - Implements fail-closed security model
+  - Role-based access control for election management
+  - Gateway decryption for payouts
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8728b6f6-34a7-412d-856e-c2d0df90f7f9) and start prompting.
+### Frontend Layer
+- **React + Vite**: Fast development and optimized production builds
+- **Wagmi v2 + RainbowKit**: Web3 wallet connectivity
+- **Zama FHE SDK**: Browser-based encryption (v0.2.0)
+- **shadcn/ui**: Beautiful, accessible component library
+- **TanStack Query**: Efficient blockchain data fetching
 
-Changes made via Lovable will be committed automatically to this repo.
+## 📋 Prerequisites
 
-**Use your preferred IDE**
+- Node.js >= 18.x
+- npm or yarn
+- MetaMask or compatible Web3 wallet
+- Sepolia ETH for gas fees
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🚀 Quick Start
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 1. Clone and Install
 
-Follow these steps:
+```bash
+git clone https://github.com/chadellis202403011298/vote-crypt-win
+cd vote-crypt-win
+npm install
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 2. Environment Configuration
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Configure `.env`:
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+# Blockchain Configuration
+SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
+PRIVATE_KEY=your_private_key_here
+ADDRESS=your_wallet_address_here
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Frontend Configuration
+VITE_SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
+VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
+VITE_ELECTION_CONTRACT_ADDRESS=deployed_contract_address
+```
+
+### 3. Development
+
+```bash
+# Compile contracts
+npm run hardhat:compile
+
+# Run tests
+npm run hardhat:test
+
+# Deploy to Sepolia
+npm run deploy:sepolia
+
+# Start frontend
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🛠️ Technology Stack
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Solidity ^0.8.24
+- @fhevm/solidity ^0.8.0
+- @zama-fhe/relayer-sdk 0.2.0
+- React ^18.3.1
+- Wagmi ^2.13.5
+- RainbowKit ^2.2.3
+- Vite ^5.4.19
+- shadcn/ui
 
-**Use GitHub Codespaces**
+## 📄 License
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/8728b6f6-34a7-412d-856e-c2d0df90f7f9) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+MIT

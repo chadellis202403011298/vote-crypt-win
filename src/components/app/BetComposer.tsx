@@ -3,44 +3,149 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Lock, AlertCircle } from "lucide-react";
+import { Shield, Lock, AlertCircle, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { parseEther, keccak256, encodePacked } from "viem";
+import { encryptElectionPrediction } from "@/lib/fhe";
+import { getElectionContractAddress, DEFAULT_ELECTION_ID } from "@/lib/config";
+import ElectionBetABI from "@/lib/abi/ElectionBettingPool.json";
 
 interface BetComposerProps {
   candidateId: number | null;
   candidateName?: string;
 }
 
-// Bet composition form with FHE encryption simulation
+/**
+ * Bet composition form with real FHE encryption and blockchain interaction
+ * - Encrypts candidate choice and stake amount using Zama FHE SDK
+ * - Generates commitment hash to prevent replay attacks
+ * - Submits encrypted data to ElectionBettingPool smart contract
+ */
 const BetComposer = ({ candidateId, candidateName }: BetComposerProps) => {
   const [amount, setAmount] = useState("");
   const [isEncrypting, setIsEncrypting] = useState(false);
   const { toast } = useToast();
+  const { address, isConnected } = useAccount();
+  const { writeContract, data: txHash, isPending: isWriting } = useWriteContract();
+  const { isLoading: isTxConfirming } = useWaitForTransactionReceipt({ hash: txHash });
 
-  // Simulate FHE encryption process
+  /**
+   * Handles the full prediction placement flow:
+   * 1. Validates inputs
+   * 2. Encrypts candidate ID and stake amount using FHE
+   * 3. Generates commitment hash
+   * 4. Submits transaction to smart contract
+   */
   const handlePlacePrediction = async () => {
-    if (!candidateId || !amount || parseFloat(amount) <= 0) {
+    // Validation
+    if (!isConnected || !address) {
       toast({
-        title: "Invalid Input",
-        description: "Please select a candidate and enter a valid bet amount.",
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to place a prediction.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsEncrypting(true);
+    if (candidateId === null || candidateId === undefined) {
+      toast({
+        title: "No Candidate Selected",
+        description: "Please select a candidate first.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Simulate encryption delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const amountNum = parseFloat(amount);
+    if (!amount || amountNum <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid bet amount (minimum 0.01 ETH).",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    toast({
-      title: "Prediction Encrypted",
-      description: `Your prediction for ${candidateName} (${amount} ETH) has been encrypted and submitted on-chain.`,
-    });
+    if (amountNum < 0.01) {
+      toast({
+        title: "Amount Too Small",
+        description: "Minimum bet amount is 0.01 ETH.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setIsEncrypting(false);
-    setAmount("");
+    try {
+      setIsEncrypting(true);
+
+      // Convert ETH to wei
+      const stakeWei = parseEther(amount);
+
+      toast({
+        title: "Encrypting Data",
+        description: "Encrypting your prediction using FHE... This may take a few seconds.",
+      });
+
+      // Encrypt candidate ID and stake amount using FHE SDK
+      const { candidateHandle, stakeHandle, proof } = await encryptElectionPrediction(
+        address,
+        candidateId,
+        stakeWei
+      );
+
+      // Generate commitment hash to prevent replay attacks
+      const commitment = keccak256(
+        encodePacked(
+          ["address", "uint256", "bytes32", "bytes32"],
+          [address, BigInt(DEFAULT_ELECTION_ID), candidateHandle, stakeHandle]
+        )
+      );
+
+      setIsEncrypting(false);
+
+      toast({
+        title: "Encryption Complete",
+        description: "Submitting encrypted prediction to blockchain...",
+      });
+
+      // Submit encrypted prediction to smart contract
+      writeContract({
+        address: getElectionContractAddress(),
+        abi: ElectionBetABI.abi,
+        functionName: "placePrediction",
+        args: [
+          BigInt(DEFAULT_ELECTION_ID),
+          candidateHandle,
+          stakeHandle,
+          proof,
+          commitment,
+        ],
+        value: stakeWei,
+      });
+
+    } catch (error) {
+      setIsEncrypting(false);
+      console.error("Prediction placement error:", error);
+
+      toast({
+        title: "Prediction Failed",
+        description: error instanceof Error ? error.message : "Failed to place prediction. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  // Monitor transaction confirmation
+  if (txHash && !isTxConfirming && !isWriting) {
+    toast({
+      title: "Prediction Placed Successfully!",
+      description: `Your encrypted prediction for ${candidateName} has been recorded on-chain.`,
+    });
+    setAmount("");
+  }
+
+  const isProcessing = isEncrypting || isWriting || isTxConfirming;
 
   return (
     <Card className="p-8 border-2">
@@ -52,7 +157,20 @@ const BetComposer = ({ candidateId, candidateName }: BetComposerProps) => {
           </p>
         </div>
 
-        {/* Warning Banner */}
+        {/* Wallet Connection Warning */}
+        {!isConnected && (
+          <div className="bg-yellow-500/10 border-2 border-yellow-500 rounded-lg p-4 flex items-start gap-3">
+            <Wallet className="w-5 h-5 text-yellow-500 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-bold mb-1">Wallet Required</p>
+              <p className="text-muted-foreground">
+                Please connect your wallet using the button in the top right corner to place predictions.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Privacy Banner */}
         <div className="bg-accent/10 border-2 border-accent rounded-lg p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-accent mt-0.5" />
           <div className="text-sm">
@@ -71,7 +189,7 @@ const BetComposer = ({ candidateId, candidateName }: BetComposerProps) => {
             </Label>
             <Input
               id="candidate"
-              value={candidateId ? `Candidate #${candidateId}` : "No candidate selected"}
+              value={candidateId !== null ? `${candidateName || `Candidate #${candidateId}`}` : "No candidate selected"}
               disabled
               className="mt-2"
             />
@@ -85,12 +203,12 @@ const BetComposer = ({ candidateId, candidateName }: BetComposerProps) => {
               id="amount"
               type="number"
               step="0.01"
-              min="0"
+              min="0.01"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="mt-2 text-lg"
-              disabled={!candidateId}
+              disabled={!candidateId || !isConnected || isProcessing}
             />
             <p className="text-xs text-muted-foreground mt-1">
               Minimum: 0.01 ETH
@@ -105,23 +223,33 @@ const BetComposer = ({ candidateId, candidateName }: BetComposerProps) => {
             Encryption Process
           </div>
           <ul className="text-xs text-muted-foreground space-y-1 ml-6 list-disc">
-            <li>Candidate ID encrypted using FHE</li>
-            <li>Bet amount encrypted using FHE</li>
-            <li>Proof generated for verification</li>
-            <li>Encrypted data submitted to smart contract</li>
+            <li>Candidate ID encrypted using Zama FHE SDK</li>
+            <li>Bet amount encrypted using Zama FHE SDK</li>
+            <li>Cryptographic proof generated for verification</li>
+            <li>Encrypted data submitted to smart contract on Sepolia</li>
           </ul>
         </div>
 
         {/* Submit Button */}
         <Button
           onClick={handlePlacePrediction}
-          disabled={!candidateId || !amount || isEncrypting}
-          className="w-full text-lg font-bold h-14 bg-secondary hover:bg-secondary/90"
+          disabled={!candidateId || !amount || !isConnected || isProcessing}
+          className="w-full text-lg font-bold h-14 bg-secondary hover:bg-secondary/90 disabled:opacity-50"
         >
           {isEncrypting ? (
             <>
               <Shield className="w-5 h-5 mr-2 animate-pulse" />
-              Encrypting & Submitting...
+              Encrypting Data...
+            </>
+          ) : isWriting || isTxConfirming ? (
+            <>
+              <Shield className="w-5 h-5 mr-2 animate-spin" />
+              Submitting Transaction...
+            </>
+          ) : !isConnected ? (
+            <>
+              <Wallet className="w-5 h-5 mr-2" />
+              Connect Wallet First
             </>
           ) : (
             <>
@@ -130,6 +258,21 @@ const BetComposer = ({ candidateId, candidateName }: BetComposerProps) => {
             </>
           )}
         </Button>
+
+        {/* Transaction Hash Display */}
+        {txHash && (
+          <div className="text-xs text-muted-foreground text-center">
+            <p>Transaction: {txHash.slice(0, 10)}...{txHash.slice(-8)}</p>
+            <a
+              href={`https://sepolia.etherscan.io/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline"
+            >
+              View on Etherscan
+            </a>
+          </div>
+        )}
       </div>
     </Card>
   );
