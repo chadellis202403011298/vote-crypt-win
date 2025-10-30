@@ -17,9 +17,9 @@ import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
  * @title ElectionBettingPool
  * @notice Privacy-preserving election prediction market that stores candidate choices
  *         and stake amounts as ciphertext while exposing only aggregated metrics.
- * @dev    Candidates are referenced by zero-based indices. All encrypted stakes are
- *         submitted after multiplying the plain wei amount by SCALE to preserve precision
- *         during division on-chain.
+ * @dev    Candidates are referenced by zero-based indices. Encrypted stakes are
+ *         submitted as plain wei amounts (not scaled). SCALE is used only for
+ *         computing payout ratios with precision.
  */
 contract ElectionBettingPool is AccessControl, SepoliaConfig {
     bytes32 public constant EDITOR_ROLE = keccak256("EDITOR_ROLE");
@@ -34,8 +34,8 @@ contract ElectionBettingPool is AccessControl, SepoliaConfig {
 
     /**
      * @dev Stores encrypted aggregates and settlement metadata.
-     *      - encryptedPool accumulates the sum of encrypted stakes (scaled by SCALE).
-     *      - encryptedOutcomeTotals[i] keeps the encrypted total for candidate i.
+     *      - encryptedPool accumulates the sum of encrypted stakes (in wei, not scaled).
+     *      - encryptedOutcomeTotals[i] keeps the encrypted total for candidate i (in wei).
      */
     struct Election {
         bool exists;
@@ -343,7 +343,9 @@ contract ElectionBettingPool is AccessControl, SepoliaConfig {
             }
 
             Election storage election = elections[payoutJob.electionId];
-            if (election.totalDepositedWei * SCALE != uint256(poolScaled)) {
+            // Note: poolScaled is in wei (not multiplied by SCALE) since client sends raw wei values
+            // We only use SCALE for computing the payout ratio with precision
+            if (election.totalDepositedWei != uint256(poolScaled)) {
                 revert InsufficientLiquidity(payoutJob.electionId);
             }
 

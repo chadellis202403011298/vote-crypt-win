@@ -24,7 +24,7 @@ const Layout = ({ children }: LayoutProps) => {
             <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
               Home
             </Link>
-            <Link to="/app" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link to="/predict" className="text-sm font-medium hover:text-primary transition-colors">
               Predict
             </Link>
           </nav>
@@ -60,7 +60,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Link to="/" className="hover:underline">
                 Home
               </Link>
-              <Link to="/app" className="hover:underline">
+              <Link to="/predict" className="hover:underline">
                 Predict
               </Link>
               <a href="#" className="hover:underline">

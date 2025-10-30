@@ -1,10 +1,11 @@
 import { useState } from "react";
 import CandidateGrid from "@/components/app/CandidateGrid";
 import BetComposer from "@/components/app/BetComposer";
+import MyPredictions from "@/components/app/MyPredictions";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BarChart3 } from "lucide-react";
+import { ArrowLeft, Shield, TrendingUp, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getCandidateById } from "@/data/candidates";
 
 /**
  * Prediction App Page - Main DApp interface for placing encrypted predictions
@@ -23,67 +24,115 @@ const PredictionApp = () => {
   // Track selected candidate index (0 or 1 for binary election)
   const [selectedCandidate, setSelectedCandidate] = useState<number | null>(null);
 
+  const selectedCandidateData = selectedCandidate !== null ? getCandidateById(selectedCandidate) : null;
+
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="container">
-        {/* Header */}
-        <div className="mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 text-accent hover:underline mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 py-6 md:py-12">
+      <div className="container max-w-7xl">
+        {/* Minimal Header */}
+        <div className="mb-8 md:mb-12">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors mb-6"
+          >
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            Back
           </Link>
-          <div className="flex items-center justify-between">
+
+          {/* Hero Section */}
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black mb-2">
-                Prediction Desk
+              <h1 className="text-3xl md:text-5xl font-black mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                2026 Election Prediction
               </h1>
-              <p className="text-lg text-muted-foreground">
-                Select a candidate and place your encrypted prediction
+              <p className="text-muted-foreground">
+                Encrypted · Secure · Transparent
               </p>
             </div>
-            <Badge variant="outline" className="h-fit">
-              <BarChart3 className="w-4 h-4 mr-1" />
-              Live Markets
-            </Badge>
-          </div>
-        </div>
 
-        {/* Market Status */}
-        <Card className="p-6 mb-8 border-2 border-accent">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-bold mb-1">2024 Presidential Election</h3>
-              <p className="text-sm text-muted-foreground">
-                Market closes on Election Day - November 5, 2024
-              </p>
-            </div>
-            <div className="flex gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-black">127</p>
-                <p className="text-xs text-muted-foreground">Days Left</p>
+            {/* Compact Stats */}
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-accent" />
+                <div>
+                  <div className="font-bold">12.8K</div>
+                  <div className="text-xs text-muted-foreground">Predictions</div>
+                </div>
               </div>
-              <div className="text-center border-l pl-4">
-                <p className="text-2xl font-black">12.8K</p>
-                <p className="text-xs text-muted-foreground">Predictions</p>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-accent" />
+                <div>
+                  <div className="font-bold">127</div>
+                  <div className="text-xs text-muted-foreground">Days Left</div>
+                </div>
               </div>
             </div>
           </div>
-        </Card>
-
-        {/* Candidates */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Select Candidate</h2>
-          <CandidateGrid
-            onSelectCandidate={setSelectedCandidate}
-            selectedCandidate={selectedCandidate}
-          />
         </div>
 
-        {/* Bet Form */}
-        <BetComposer
-          candidateId={selectedCandidate}
-          candidateName={selectedCandidate ? `Candidate #${selectedCandidate}` : undefined}
-        />
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
+
+          {/* Left Column - Candidates (Spans 2 columns on large screens) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Step Indicator */}
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent text-accent-foreground text-xs font-bold">
+                1
+              </span>
+              Choose Your Candidate
+            </div>
+
+            <CandidateGrid
+              onSelectCandidate={setSelectedCandidate}
+              selectedCandidate={selectedCandidate}
+            />
+
+            {/* Privacy Badge */}
+            <Card className="p-4 bg-accent/5 border-accent/20">
+              <div className="flex items-start gap-3">
+                <Shield className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold">End-to-End Encryption</p>
+                  <p className="text-xs text-muted-foreground">
+                    Your choice is encrypted in browser using Zama FHE. Only you can decrypt your prediction.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Right Column - Bet Form (Sticky on large screens) */}
+          <div className="lg:col-span-1">
+            <div className="lg:sticky lg:top-6 space-y-6">
+              {/* Step Indicator */}
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent text-accent-foreground text-xs font-bold">
+                  2
+                </span>
+                Place Your Bet
+              </div>
+
+              <BetComposer
+                candidateId={selectedCandidate}
+                candidateName={selectedCandidateData?.name}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* My Predictions Section */}
+        <div className="mt-12 md:mt-16">
+          {/* Step Indicator */}
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-6">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent text-accent-foreground text-xs font-bold">
+              3
+            </span>
+            Track Your Predictions
+          </div>
+
+          <MyPredictions />
+        </div>
       </div>
     </div>
   );

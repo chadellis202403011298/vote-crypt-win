@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Trophy } from "lucide-react";
+import { TrendingUp, Trophy, Check } from "lucide-react";
 import { candidateProfiles } from "@/data/candidates";
 
 interface CandidateGridProps {
@@ -10,62 +10,96 @@ interface CandidateGridProps {
   winningCandidate?: number | null;
 }
 
-// Displays candidate cards sourced from newsroom data tokens.
+/**
+ * Modern Candidate Grid Component
+ *
+ * Features:
+ * - Gradient backgrounds for visual appeal
+ * - Large, prominent avatars
+ * - Clean data visualization
+ * - Smooth hover effects and animations
+ * - Clear selection state
+ */
 const CandidateGrid = ({ onSelectCandidate, selectedCandidate, disabled = false, winningCandidate }: CandidateGridProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
       {candidateProfiles.map((candidate) => {
         const isSelected = selectedCandidate === candidate.id;
         const isWinner = winningCandidate === candidate.id;
+
         return (
           <Card
             key={candidate.id}
-            className={`p-6 cursor-pointer transition-all hover:scale-105 border-2 ${
-              isSelected ? "border-accent bg-accent/5" : "hover:border-accent/50"
+            className={`group relative overflow-hidden cursor-pointer transition-all duration-300 border-2 ${
+              isSelected
+                ? "border-accent shadow-lg shadow-accent/20 scale-[1.02]"
+                : "border-border hover:border-accent/50 hover:shadow-md"
             }`}
             onClick={() => !disabled && onSelectCandidate(candidate.id)}
           >
-            <div className="text-center space-y-4">
-              {/* Avatar */}
-              <div className="text-6xl">{candidate.avatar}</div>
+            {/* Selection Checkmark */}
+            {isSelected && (
+              <div className="absolute top-3 right-3 z-10">
+                <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center shadow-lg">
+                  <Check className="w-5 h-5 text-accent-foreground" />
+                </div>
+              </div>
+            )}
 
-              {/* Candidate Info */}
-              <div>
-                <h3 className="text-xl font-bold mb-1">{candidate.name}</h3>
-                <Badge variant="outline" className="text-xs">
+            {/* Winner Badge */}
+            {isWinner && (
+              <div className="absolute top-3 left-3 z-10">
+                <Badge className="bg-yellow-500 text-yellow-950 gap-1 shadow-lg">
+                  <Trophy className="w-3 h-3" /> Winner
+                </Badge>
+              </div>
+            )}
+
+            {/* Card Content */}
+            <div className="p-6 space-y-5">
+              {/* Avatar Section */}
+              <div className="flex flex-col items-center">
+                <div className={`text-7xl mb-3 transition-transform duration-300 ${
+                  isSelected ? "scale-110" : "group-hover:scale-105"
+                }`}>
+                  {candidate.avatar}
+                </div>
+                <h3 className="text-xl font-bold text-center mb-1.5">{candidate.name}</h3>
+                <Badge variant="secondary" className="text-xs font-medium">
                   {candidate.party}
                 </Badge>
               </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Odds</p>
+              {/* Stats Section */}
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
+                {/* Odds */}
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs font-medium text-muted-foreground mb-1.5">Odds</p>
                   <p className="text-2xl font-black">{candidate.odds}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
-                    <TrendingUp className="w-3 h-3" />
-                    Support
-                  </p>
+
+                {/* Support */}
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center justify-center gap-1 mb-1.5">
+                    <TrendingUp className="w-3 h-3 text-accent" />
+                    <p className="text-xs font-medium text-muted-foreground">Support</p>
+                  </div>
                   <p className="text-2xl font-black">{candidate.support}%</p>
                 </div>
               </div>
 
-              {/* Selection Indicator */}
-              {isSelected && (
-                <div className="pt-2">
-                  <Badge className="bg-accent">Selected</Badge>
-                </div>
-              )}
-              {isWinner && (
-                <div className="pt-2">
-                  <Badge variant="outline" className="gap-1">
-                    <Trophy className="w-3 h-3" /> Winner
-                  </Badge>
+              {/* Hover Indicator */}
+              {!isSelected && (
+                <div className="pt-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p className="text-xs text-muted-foreground">Click to select</p>
                 </div>
               )}
             </div>
+
+            {/* Bottom Accent Bar (only when selected) */}
+            {isSelected && (
+              <div className="h-1.5 bg-gradient-to-r from-accent/50 via-accent to-accent/50" />
+            )}
           </Card>
         );
       })}

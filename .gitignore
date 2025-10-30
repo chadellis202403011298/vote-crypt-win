@@ -38,3 +38,4 @@ fhevmTemp
 # Deployment logs
 deployment-output.txt
 deployment.log
+.vercel

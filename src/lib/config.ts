@@ -1,6 +1,7 @@
 import { sepolia } from "wagmi/chains";
 
 export const APP_CHAIN = sepolia;
+export { sepolia };
 
 export const RPC_URL = import.meta.env.VITE_SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com";
 

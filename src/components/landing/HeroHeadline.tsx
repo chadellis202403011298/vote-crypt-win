@@ -53,13 +53,17 @@ const HeroHeadline = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-wrap gap-4">
-            <Link to="/app">
+            <Link to="/predict">
               <Button variant="default" size="lg" className="text-lg font-bold bg-secondary hover:bg-secondary/90">
                 Open Prediction Desk
               </Button>
             </Link>
             <Link to="/methodology">
-              <Button variant="outline" size="lg" className="text-lg font-bold border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-lg font-bold border-2 border-white text-white bg-transparent hover:bg-white hover:text-primary"
+              >
                 Read Methodology
               </Button>
             </Link>
